@@ -44,6 +44,7 @@ typedef struct kaps {
     float rotX;
     float rotY;
     float rotZ;
+    int color[];
     struct kaps *next;
 } kap_t;
 
@@ -71,7 +72,6 @@ static void resize(int width, int height)
 static void newKap(kap_t * kap) {
 
     glPushMatrix();
-
     glTranslatef(kap->posX, kap->posY, kap->posZ);
     glRotatef(kap->rotX, 1, 0, 0);
     glRotatef(kap->rotY, 0, 1, 0);
@@ -128,7 +128,6 @@ static void key(unsigned char key, int x, int y)
 {
     switch (key)
     {
-        case 27 :
         case 'q':
             posX--;
             break;
@@ -143,11 +142,17 @@ static void key(unsigned char key, int x, int y)
             lastkap->next->next = NULL;
             active = lastkap;
             lastkap = lastkap->next;
+            break;
 
-        case 'p':
+        case 'w':
             active = fkap;
-
-
+            break;
+        case 'n':
+            if (active->next) {
+                active=active->next;
+            } else {
+                active=fkap;
+            }
         case 'd':
             posX++;
             break;
@@ -182,7 +187,7 @@ static void key(unsigned char key, int x, int y)
         case 'k':
             rotZ-=3;
             break;
-        case 'c':
+        case 'm':
             rotZ+=3;
             break;
         case 'b':
