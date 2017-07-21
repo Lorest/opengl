@@ -21,6 +21,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <iostream>
+#include <math.h>
+
 
 static int slices = 16;
 static int stacks = 16;
@@ -34,6 +36,7 @@ static int mouseX = 0;
 static int mouseY = 0;
 static int mouseOldX = 0;
 static int mouseOldY = 0;
+
 static float val;
 static bool ctrlpress;
 
@@ -44,8 +47,9 @@ typedef struct kaps {
     float rotX;
     float rotY;
     float rotZ;
-    int color[];
+    int color[3];
     struct kaps *next;
+    struct kaps *prev;
 } kap_t;
 
 kap_t *active;
@@ -53,6 +57,8 @@ kap_t *active;
 kap_t *fkap = NULL;
 
 kap_t *lastkap;
+
+
 
 /* GLUT callback Handlers */
 
@@ -66,16 +72,81 @@ static void resize(int width, int height)
     glFrustum(-ar, ar, -1.0, 1.0, 2.0, 100.0);
 
     glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity() ;
+    glLoadIdentity();
+}
+
+static void drawAxes (kap_t * kap) {
+
+    double roll = kap->rotX;
+    double teta = kap->rotY;
+    double phi = kap->rotZ;
+
+    glPushMatrix();
+    glTranslatef((kap->posX), kap->posY, kap->posZ);
+    glColor3d(1,0,0);
+    glRotatef(roll, 1, 0, 0);
+    glRotatef(phi, 0, 0, 1);
+    glRotatef(teta, 0, 1, 0);
+    glScalef(20,1,1);
+    glutSolidCube(1);
+    glPopMatrix();
+
+    glPushMatrix();
+    glTranslatef(kap->posX, kap->posY, kap->posZ);
+    glColor3d(0,1,0);
+    glRotatef(roll, 1, 0, 0);
+    glRotatef(phi, 0, 0, 1);
+    glRotatef(teta, 0, 1, 0);
+    glScalef(1,20,1);
+    glutSolidCube(1);
+    glPopMatrix();
+
+    glPushMatrix();
+    glTranslatef(kap->posX, kap->posY, (kap->posZ));
+    glColor3d(0,0,1);
+    glRotatef(roll, 1, 0, 0);
+    glRotatef(phi, 0, 0, 1);
+    glRotatef(teta, 0, 1, 0);
+    glScalef(1,1,20);
+    glutSolidCube(1);
+    glPopMatrix();
+
 }
 
 static void newKap(kap_t * kap) {
 
+
+   /* quat MyQuaternion;
+
+    vec3 EulerAngles(kap->rotX, kap->rotY, kap->rotZ);
+    MyQuaternion = quat(EulerAngles);
+    MyQuaternion = gtx::quaternion::angleAxis(degrees(RotationAngle), RotationAxis);*/
+
+
+    double pitch = kap->rotX;
+    double teta = kap->rotY;
+    double phi = kap->rotZ;
+
+    double y = cos(teta); // Y
+    double x1 = sin(teta);   //X
+    double z = cos(phi);   //Z
+    double x2 = -sin(phi);   //X
+    double x = x1+x2;
+
+    //drawAxes(kap);
     glPushMatrix();
+
+    glColor3d(kap->color[0],kap->color[1],kap->color[2]);
     glTranslatef(kap->posX, kap->posY, kap->posZ);
-    glRotatef(kap->rotX, 1, 0, 0);
-    glRotatef(kap->rotY, 0, 1, 0);
-    glRotatef(kap->rotZ, 0, 0, 1);
+    //glRotatef(kap->rotX, x, y, z);
+    glRotatef(pitch, 1, 0, 0);
+    glRotatef(teta, -sin(rotZ), cos(rotZ), 0);
+    glRotatef(phi, 0, 0, 1);
+
+
+
+
+
     glScalef(15,3,1);
     glutSolidCube(1);
 
@@ -86,6 +157,7 @@ static void newKap(kap_t * kap) {
 static void display(void)
 {
 
+
     if (fkap == NULL) {
         fkap = (kap_t *)malloc(sizeof(kap_t));
         fkap->posX = 0;
@@ -94,7 +166,10 @@ static void display(void)
         fkap->rotX = 0;
         fkap->rotY = 0;
         fkap->rotZ = 0;
-        fkap->next = NULL;
+        fkap->color[0] = 1;
+        fkap->color[1] = 1;
+        fkap->next = fkap;
+        fkap->prev = fkap;
         active = fkap;
         lastkap = fkap;
     }
@@ -105,18 +180,16 @@ static void display(void)
     const double a = t*90.0;
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+
     glColor3d(1,0,0);
-
-
-
-
 
     kap_t *kdisplay = fkap;
 
     do {
         newKap(kdisplay);
         kdisplay = kdisplay->next;
-    } while (kdisplay != NULL);
+    } while (kdisplay != fkap);
 
     glutSwapBuffers();
 }
@@ -128,10 +201,57 @@ static void key(unsigned char key, int x, int y)
 {
     switch (key)
     {
-        case 'q':
-            posX--;
+        case 27:
+            exit(0);
             break;
-        case 'p':
+
+        // TRANSLATION
+        case 'q':
+            active->posX--;
+            break;
+
+        case 'd':
+            active->posX++;
+            break;
+
+        case 'z':
+            active->posY++;
+            break;
+
+        case 's':
+            active->posY--;
+            break;
+
+        case 'a':
+            active->posZ++;
+            break;
+        case 'e':
+            active->posZ--;
+            break;
+
+        // ROTATION
+
+        case 'u':
+            active->rotY-=3;
+            break;
+        case 'j':
+            active->rotY+=3;
+            break;
+        case 'o':
+            active->rotX-=3;
+            break;
+        case 'l':
+            active->rotX+=3;
+            break;
+        case 'k':
+            active->rotZ-=3;
+            break;
+        case 'm':
+            active->rotZ+=3;
+            break;
+
+        //NOUVELLE PIECE
+        case '+':
             lastkap->next = (kap_t *)malloc(sizeof(kap_t));
             lastkap->next->posX = 10;
             lastkap->next->posY = 10;
@@ -139,59 +259,90 @@ static void key(unsigned char key, int x, int y)
             lastkap->next->rotX = 0;
             lastkap->next->rotY = 0;
             lastkap->next->rotZ = 0;
-            lastkap->next->next = NULL;
-            active = lastkap;
+            lastkap->next->color[0] = 1;
+            lastkap->next->next = fkap;
+            lastkap->next->prev = lastkap;
+            fkap->prev = lastkap->next;
             lastkap = lastkap->next;
+            active->color[1] = 0;
+            active = lastkap;
+            active->color[1] = 1;
             break;
 
+        //COPIE KAPLA
+
+        case '*':
+            lastkap->next = (kap_t *)malloc(sizeof(kap_t));
+            lastkap->next->posX = active->posX;
+            lastkap->next->posY = active->posY;
+            lastkap->next->posZ = active->posZ;
+            lastkap->next->rotX = active->rotX;
+            lastkap->next->rotY = active->rotY;
+            lastkap->next->rotZ = active->rotZ;
+            lastkap->next->color[0] = 1;
+            lastkap->next->next = fkap;
+            lastkap->next->prev = lastkap;
+            fkap->prev = lastkap->next;
+            lastkap = lastkap->next;
+            active->color[1] = 0;
+            active = lastkap;
+
+            active->color[1] = 1;
+            break;
+
+
+        //PREMIERE PIECE
         case 'w':
+            active->color[1] = 0;
             active = fkap;
+            active->color[1] = 1;
             break;
-        case 'n':
-            if (active->next) {
-                active=active->next;
-            } else {
-                active=fkap;
+        //PIECE SUIVANTE
+        case '6':
+            active->color[1] = 0;
+            active=active->next;
+            /*if (active->next) {
+
             }
-        case 'd':
-            posX++;
-            break;
+            else {
+                active=fkap;
+            }*/
+            active->color[1] = 1;
 
-        case 'z':
-            posY++;
-            break;
-
-        case 's':
-            posY--;
-            break;
-
-        case 'r':
-            posZ++;
-            break;
-        case 'f':
-            posZ--;
-            break;
-
-        case 'a':
-            rotY-=3;
-            break;
-        case 'e':
-            rotY+=3;
-            break;
-        case 'o':
-            rotX-=3;
-            break;
-        case 'l':
-            rotX+=3;
-            break;
-        case 'k':
-            rotZ-=3;
-            break;
-        case 'm':
-            rotZ+=3;
-            break;
+        //SMOOTHIER CONTROL
         case 'b':
             ctrlpress = true;
+            break;
+        //PREV
+        case '4':
+            active->color[1] = 0;
+            active=active->prev;
+            /*if (active->next) {
+
+            }
+            else {
+                active=fkap;
+            }*/
+            active->color[1] = 1;
+            break;
+        //SUPPR
+        case '-':
+            if (active == fkap) {
+                if (active == lastkap) {
+                    break;
+                }
+
+                fkap = active->next;
+            }
+            if (active == lastkap) {
+                lastkap = active->prev;
+            }
+            active->next->prev = active->prev;
+            active->prev->next = active->next;
+            kap_t *temp = active;
+            active = active->next;
+            free(temp);
+            active->color[1] = 1;
             break;
 
     }
@@ -238,8 +389,8 @@ static void rotateMouse (int param1, int param2) {
         active->rotY += pmX/10;
         active->rotZ -= pmY/10;
     } else {
-        active->rotY += pmX;
-        active->rotZ -= pmY;
+        active->rotY += pmX/1;
+        active->rotZ -= pmY/1;
     }
 
     mouseOldX = param1;

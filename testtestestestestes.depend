@@ -1,10 +1,11 @@
 # depslib dependency file v1.0
-1500566943 source:c:\users\loic.forest\desktop\projetc\testtestestestestes\main.cpp
+1500643726 source:c:\users\loic.forest\desktop\projetc\testtestestestestes\main.cpp
 	<GLUT/glut.h>
 	<GL/glut.h>
 	<stdlib.h>
 	<stdio.h>
 	<iostream>
+	<math.h>
 
 1500449019 c:\users\loic.forest\desktop\codeblocks\mingw\include\gl\glut.h
 	"freeglut_std.h"
@@ -239,4 +240,7 @@
 1500448159 c:\users\loic.forest\desktop\codeblocks\mingw\include\sys\types.h
 	<_mingw.h>
 	<stddef.h>
+
+1500448155 c:\users\loic.forest\desktop\codeblocks\mingw\include\math.h
+	<_mingw.h>
 
